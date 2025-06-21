@@ -1,0 +1,322 @@
+<!DOCTYPE html>
+<html lang="en">
+  <head>
+    <meta charset="UTF-8" />
+    <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+    <title>FocusTube</title>
+    <script src="https://cdn.tailwindcss.com"></script>
+    <style>
+      .sidebar-hidden {
+        transform: translateX(-100%);
+      }
+      .sidebar-visible {
+        transform: translateX(0);
+      }
+      /* Custom scrollbar for sidebar */
+      #sidebar::-webkit-scrollbar {
+        width: 8px;
+      }
+      #sidebar::-webkit-scrollbar-thumb {
+        background: #222;
+        border-radius: 4px;
+      }
+    </style>
+  </head>
+  <body
+    class="bg-[#0f0f0f] text-white transition-colors duration-300 font-sans"
+  >
+    <!-- Topbar -->
+    <div
+      class="fixed top-0 left-0 right-0 z-40 flex justify-between items-center px-6 py-2 bg-[#212121] shadow border-b border-[#222] h-16"
+    >
+      <div class="flex gap-4 items-center">
+        <button
+          onclick="toggleSidebar()"
+          class="p-2 rounded-full hover:bg-[#272727] focus:outline-none"
+          aria-label="Toggle Sidebar"
+        >
+          <svg
+            width="24"
+            height="24"
+            fill="none"
+            stroke="white"
+            stroke-width="2"
+            viewBox="0 0 24 24"
+          >
+            <rect x="3" y="6" width="18" height="2" rx="1" />
+            <rect x="3" y="11" width="18" height="2" rx="1" />
+            <rect x="3" y="16" width="18" height="2" rx="1" />
+          </svg>
+        </button>
+
+        <a href="#" class="flex items-center gap-2">
+          <svg width="32" height="32" viewBox="0 0 24 24" fill="none">
+            <circle cx="12" cy="12" r="10" stroke="#FF0000" stroke-width="2" />
+            <circle cx="12" cy="12" r="6" stroke="#FF0000" stroke-width="2" />
+            <polygon points="12,9 16,12 12,15" fill="#FF0000" />
+          </svg>
+          <span class="text-2xl font-bold tracking-tight text-white"
+            >FocusTube</span
+          >
+        </a>
+      </div>
+
+      <div class="flex gap-2">
+        <button
+          onclick="toggleDocs()"
+          class="bg-[#272727] px-4 py-2 rounded-full hover:bg-[#383838] text-sm font-medium transition"
+        >
+          Docs
+        </button>
+      </div>
+    </div>
+
+    <!-- Docs -->
+    <div
+      id="docs"
+      class="hidden fixed top-16 left-0 right-0 max-w-lg mx-auto p-6 text-base bg-[#232323] border border-[#333] rounded-xl shadow-lg z-50"
+    >
+      <h2 class="font-bold mb-3 text-lg text-white">How to use</h2>
+      <ul class="list-disc list-inside space-y-2 mb-4 text-gray-200">
+        <li>
+          <strong>YouTube:</strong> Paste full link (e.g.
+          <code class="bg-[#181818] px-1 rounded text-red-400"
+            >https://www.youtube.com/watch?v=abc123</code
+          >).
+        </li>
+        <li>
+          <strong>Facebook:</strong> Copy timestamp link (must be public).
+        </li>
+        <li>
+          Paste in input, then click <strong>Load</strong> and then
+          <strong>Save</strong>.
+        </li>
+      </ul>
+      <button
+        onclick="clearAllData()"
+        class="bg-red-600 hover:bg-red-700 text-white px-5 py-2 rounded-full shadow font-semibold"
+      >
+        Clear All Data
+      </button>
+    </div>
+
+    <div class="flex min-h-screen pt-16">
+      <!-- Sidebar -->
+      <aside
+        id="sidebar"
+        class="sidebar-visible fixed md:static bg-[#181818] border-r border-[#222] w-72 h-full p-0 overflow-y-auto transition-transform duration-300 z-30 md:z-auto flex flex-col"
+      >
+        <div class="px-6 py-5 border-b border-[#222]">
+          <h2 class="text-lg font-semibold mb-1 text-white">Saved Videos</h2>
+        </div>
+        <div id="savedList" class="space-y-2 px-4 py-4"></div>
+        <div class="px-6 py-5 border-t border-[#222] mt-auto">
+          <h2 class="text-lg font-semibold mb-1 text-white">Completed</h2>
+        </div>
+        <div id="completedList" class="space-y-2 px-4 pb-6"></div>
+      </aside>
+
+      <!-- Main Content -->
+      <main class="flex-1 p-6 md:p-10 transition-all max-w-5xl mx-auto w-full">
+        <div class="w-full flex flex-col sm:flex-row gap-3 mb-8">
+          <input
+            id="videoInput"
+            type="text"
+            placeholder="Paste YouTube or Facebook video link..."
+            class="flex-1 p-3 rounded-full text-black text-base outline-none shadow bg-[#f1f1f1] focus:ring-2 focus:ring-red-600 transition"
+          />
+          <button
+            onclick="loadVideo()"
+            class="bg-[#222] hover:bg-[#333] text-white px-5 py-2 rounded-full font-semibold shadow transition"
+          >
+            Load
+          </button>
+          <button
+            onclick="saveYouTube()"
+            class="bg-red-600 hover:bg-red-700 px-5 py-2 rounded-full font-semibold shadow transition"
+          >
+            Save YouTube
+          </button>
+          <button
+            onclick="saveFacebook()"
+            class="bg-blue-600 hover:bg-blue-700 px-5 py-2 rounded-full font-semibold shadow transition"
+          >
+            Save Facebook
+          </button>
+        </div>
+
+        <div
+          id="videoContainer"
+          class="w-full aspect-video rounded-2xl overflow-hidden shadow-2xl hidden bg-black"
+        ></div>
+
+        <footer class="text-center text-xs text-[#888] mt-16">
+          © 2025 Tanim. All rights reserved.
+        </footer>
+      </main>
+    </div>
+
+    <script>
+      const videoInput = document.getElementById("videoInput");
+      const videoContainer = document.getElementById("videoContainer");
+      const savedList = document.getElementById("savedList");
+      const completedList = document.getElementById("completedList");
+      const sidebar = document.getElementById("sidebar");
+      const docs = document.getElementById("docs");
+
+      let savedVideos = JSON.parse(localStorage.getItem("savedVideos") || "[]");
+      let completedVideos = JSON.parse(
+        localStorage.getItem("completedVideos") || "[]"
+      );
+
+      function getYouTubeID(url) {
+        try {
+          const u = new URL(url);
+          if (u.hostname === "youtu.be") return u.pathname.slice(1);
+          if (u.hostname.includes("youtube.com"))
+            return u.searchParams.get("v");
+        } catch {}
+        return null;
+      }
+
+      async function fetchYouTubeMeta(videoID) {
+        const res = await fetch(
+          `https://noembed.com/embed?url=https://www.youtube.com/watch?v=${videoID}`
+        );
+        const data = await res.json();
+        return {
+          id: videoID,
+          title: data.title,
+          thumbnail: `https://img.youtube.com/vi/${videoID}/hqdefault.jpg`,
+          type: "youtube",
+        };
+      }
+
+      function loadVideo() {
+        const url = videoInput.value.trim();
+        const ytID = getYouTubeID(url);
+        if (ytID) {
+          videoContainer.innerHTML = `<iframe class="w-full h-full" src="https://www.youtube.com/embed/${ytID}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
+        } else if (url.includes("facebook.com")) {
+          videoContainer.innerHTML = `<iframe class="w-full h-full" src="https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(
+            url
+          )}&autoplay=1" frameborder="0" allowfullscreen></iframe>`;
+        } else {
+          return alert("Invalid video URL.");
+        }
+        videoContainer.classList.remove("hidden");
+      }
+
+      async function saveYouTube() {
+        const url = videoInput.value.trim();
+        const videoID = getYouTubeID(url);
+        if (!videoID) return alert("Invalid YouTube link.");
+        if (savedVideos.some((v) => v.id === videoID))
+          return alert("Already saved.");
+        const meta = await fetchYouTubeMeta(videoID);
+        savedVideos.push(meta);
+        persist();
+        renderVideos();
+      }
+
+      function saveFacebook() {
+        const url = videoInput.value.trim();
+        if (!url.includes("facebook.com"))
+          return alert("Invalid Facebook link.");
+        if (savedVideos.some((v) => v.id === url))
+          return alert("Already saved.");
+        savedVideos.push({
+          id: url,
+          title: "Facebook Video",
+          thumbnail: "https://www.facebook.com/images/fb_icon_325x325.png",
+          type: "facebook",
+        });
+        persist();
+        renderVideos();
+      }
+
+      function loadFromSaved(index, fromCompleted = false) {
+        const list = fromCompleted ? completedVideos : savedVideos;
+        const video = list[index];
+        if (video.type === "youtube") {
+          videoContainer.innerHTML = `<iframe class="w-full h-full" src="https://www.youtube.com/embed/${video.id}?autoplay=1" frameborder="0" allowfullscreen></iframe>`;
+        } else {
+          videoContainer.innerHTML = `<iframe class="w-full h-full" src="https://www.facebook.com/plugins/video.php?href=${encodeURIComponent(
+            video.id
+          )}&autoplay=1" frameborder="0" allowfullscreen></iframe>`;
+        }
+        videoContainer.classList.remove("hidden");
+      }
+
+      function completeVideo(index) {
+        const video = savedVideos[index];
+        completedVideos.push(video);
+        savedVideos.splice(index, 1);
+        persist();
+        renderVideos();
+      }
+
+      function deleteVideo(index, from = "saved") {
+        if (from === "saved") savedVideos.splice(index, 1);
+        else completedVideos.splice(index, 1);
+        persist();
+        renderVideos();
+      }
+
+      function persist() {
+        localStorage.setItem("savedVideos", JSON.stringify(savedVideos));
+        localStorage.setItem(
+          "completedVideos",
+          JSON.stringify(completedVideos)
+        );
+      }
+
+      function renderVideos() {
+        savedList.innerHTML = savedVideos
+          .map((v, i) => renderCard(v, i, false))
+          .join("");
+        completedList.innerHTML = completedVideos
+          .map((v, i) => renderCard(v, i, true))
+          .join("");
+      }
+
+      function renderCard(video, index, isCompleted) {
+        const actions = isCompleted
+          ? `<button onclick="deleteVideo(${index}, 'completed')" class="bg-[#232323] hover:bg-red-600 px-3 py-1 text-xs rounded-full font-medium transition">Delete</button>`
+          : `<button onclick="completeVideo(${index})" class="bg-blue-600 hover:bg-blue-700 px-3 py-1 text-xs rounded-full font-medium transition">Mark Done</button>
+             <button onclick="deleteVideo(${index}, 'saved')" class="bg-[#232323] hover:bg-red-600 px-3 py-1 text-xs rounded-full font-medium transition">Remove</button>`;
+        return `
+        <div class="bg-[#232323] hover:bg-[#292929] transition p-2 rounded-xl shadow flex gap-3 items-center group">
+          <img src="${video.thumbnail}" class="w-20 h-12 object-cover rounded-lg cursor-pointer ring-2 ring-transparent group-hover:ring-red-600 transition" onclick="loadFromSaved(${index}, ${isCompleted})"/>
+          <div class="flex flex-col flex-1 overflow-hidden">
+            <div class="text-sm truncate font-semibold text-white">${video.title}</div>
+            <div class="flex gap-2 mt-2">${actions}</div>
+          </div>
+        </div>`;
+      }
+
+      function toggleSidebar() {
+        sidebar.classList.toggle("sidebar-hidden");
+        sidebar.classList.toggle("sidebar-visible");
+      }
+
+      function toggleDocs() {
+        docs.classList.toggle("hidden");
+      }
+
+      function clearAllData() {
+        localStorage.clear();
+        savedVideos = [];
+        completedVideos = [];
+        renderVideos();
+        alert("All saved data cleared.");
+      }
+
+      function init() {
+        renderVideos();
+      }
+
+      init();
+    </script>
+  </body>
+</html>
